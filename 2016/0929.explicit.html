@@ -30,7 +30,9 @@
 			<p>能不能走心一点？能不能深入一点？能不能有点其它方面的判断力？</p>
 			<p>来公司面试的时候，我跟面试官 CTO 同学唱了一回反调。他给我出 C++ 构造函数的面试题是这样：</p>
 			<blockquote>
-				<p>class::constructor(a):m_a(a){}<br>class::constructor(a){m_a = a;}<br>不同写法之间两者有什么区别？</p>
+				<p><pre><code>class::constructor(a)<br>: m_a(a)<br>{}
+				<br>class::constructor(a)<br>{<br>    m_a = a;<br>}</code></pre>
+					<br>不同写法之间两者有什么区别？</p>
 			</blockquote>
 			<p>我回答：第一种方式比第二种方式节省了一次复制构造函数。紧跟着我强调：但是我仍然会用第二种写法。</p>
 			<p>他惊讶于我明知道第一种方式更高效还要用第二种写法。我解释：C++ 的后辈们都没有这种写法，只有 C++ 独有。CPU 多跑几个周期无关我痛痒，我更希望程序清晰点！</p>
