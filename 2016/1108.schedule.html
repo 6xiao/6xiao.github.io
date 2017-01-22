@@ -3,7 +3,6 @@
 
 <head>
 	<meta charset='utf-8'>
-	<meta http-equiv="X-UA-Compatible" content="chrome=1">
 	<link rel="stylesheet" type="text/css" href="../stylesheets/stylesheet.css" media="screen">
 	<link rel="stylesheet" type="text/css" href="../stylesheets/github-dark.css" media="screen">
 	<link rel="icon" type="image/jpeg" href="../images/favicon.jpeg">
@@ -15,8 +14,8 @@
 		<div class="container">
 			<a href="../index.html">
 				<h1>代码与代码之外</h1>
+				<h2>Code and Beyond</h2>
 			</a>
-			<h2>Code and Beyond</h2>
 			<section id="titles">
 				<h3>Golang调度模式之通俗演义版</h3>
 			</section>
@@ -27,7 +26,8 @@
 		<section id="main_content">
 			<p>之前在深圳Gopher微信群里回答一个问题，将 Go 调度比喻成程序员的工作场景，就把一个非常费解的问题极简化了，拖延两个月后总结成本文。</p>
 			<p>Go语言语言级并发最小逻辑单元是 goroutine，goroutine 有类似线程的特性但调度起来比线程轻量很多。其轻量程度类似于 Erlang 中的“纤程”，一个 Erlang 虚拟机进程可以承载数万“纤程”。一个操作系统线程也可以承载数万
-				goroutine，相比之下线程和进程几乎都处于一个非常重的数量级。</p>
+				goroutine，相比之下线程和进程几乎都处于一个非常重的数量级。
+			</p>
 			<p>我们可以在多线程或多进程比较昂贵的场景中创建很多低成本的 goroutine 来减少运行时操作系统调度损耗，或者把事件式异步编程这种开发时间长而质量脆弱的并发模型改用 goroutine 以同步的方式用几乎相同的运行时成本解决。</p>
 			<p>因为目前的操作系统实现是只提供了原生的进程和线程，甚至 Linux 因为进程和线程区别不大而把线程实现为共享内存空间的进程而已，那么就需要编程语言自身来实现这些机制。</p>
 			<p>Go 的调度器是实现这种机制的核心，其中有四种抽象模型非常重要，分别是 G、P、M、S ：</p>
