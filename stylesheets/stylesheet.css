@@ -5,7 +5,7 @@ body {
   color: #eaeaea;
   font: 16px;
   line-height: 1.5;
-  font-family: "Microsoft YaHei", "STHeiti", "WenQuanYi Micro Hei", Monaco, "Bitstream Vera Sans Mono", "Lucida Console", Terminal, monospace;
+  font-family: "STHeiti", "WenQuanYi Micro Hei", Monaco, "Bitstream Vera Sans Mono", "Lucida Console", Terminal, monospace;
 }
 
 .container {
