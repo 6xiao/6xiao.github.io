@@ -1,0 +1,428 @@
+import "formax_social/cell_proxy/proto/cell_proxy_common.proto";
+
+package cell_proxy.protocols;
+option java_package = "formax.net";
+option java_outer_classname = "ContentServiceProtocol";
+
+// 跳转处理
+message Jumper {
+    optional    string          scheme          = 1; // eg: formax://***
+}
+
+// 订阅源的分类签或内容的分类签
+message Label {
+    optional    Jumper          jump            = 1; // eg: formax://stockDetail
+    optional    string          class_type      = 2; // eg: TEXT, TICKER, ICON
+    optional    string          text            = 3; // eg: #财经#, 00700, V官方
+    optional    string          color           = 4;
+    repeated    string          plus_icon       = 5; // 一个订阅源的扩展图标
+}
+
+// 各种计数
+message CountGroup {
+    optional    int64           view            = 1 [default = 0]; // 阅读计数
+    optional    int64           like            = 2 [default = 0]; // 点赞计数
+    optional    int64           reply           = 3 [default = 0]; // 回复计数
+    optional    bool            I_like_it       = 4 [default = false]; // 我的点赞
+}
+
+// 标的
+message Ticker {
+    optional    Jumper          jump            = 1;
+    optional    string          market_code     = 2; // eg: "601166", "JD"
+    optional    string          ticker_name     = 3; // eg: "兴业银行"
+    optional    string          ticker_type     = 4; // eg：STOCK, FOREX
+    optional    string          last_price      = 5; // 最新
+    optional    string          change          = 6; // 涨跌幅
+    optional    string          change_price    = 7; // 涨跌额
+    optional    string          exchange_name   = 8; // eg:"SH", "SZ", "HK"
+}
+
+// 订阅源
+message Source {
+    optional    Jumper          jump            = 1;
+    optional    string          class_type      = 2; // eg: CHANNEL, SPIDER, FOREX_MASTER/外汇牛人, STOCK_MASTER/股票牛人,
+                                                     // MULTI_MASTER/双料牛人, TICKER, ZIXUAN 自选股, FRESH_MAN/小白， CANCELED_MAN/牛人身份已取消
+    optional    int64           sid             = 3 [default = 0]; // source id
+    optional    string          name            = 4; // eg: 福亿集团
+    optional    string          head_icon       = 5;
+    repeated    Label           labels          = 6; // 订阅源标签列表
+    optional    bool            has_follow      = 7 [default = false];
+    optional    string          brief           = 8; // 订阅源简介
+    optional    Ticker          ticker          = 9; // 个股订阅源信息
+    optional    bool            on_show         = 10; // 是否在列表中显示快速关注
+    optional    bool            sub_push        = 11; // 是否已经关注订阅PUSH
+}
+
+message Banner {
+    optional    Jumper          jump            = 1;
+    optional    string          picture         = 2; // eg: http://cdn.***
+    optional    string          text            = 3; // eg: 江南皮革厂倒闭,全场20块的皮包谁来买？
+}
+
+message BannerGroup {
+    // 实际像素高 = 设备像素宽 * virtual_high / virtual_weight
+    // eg: 图片高300宽900，比例1/3, 若 v_h = 3, v_w = 9
+    // 在1080P屏幕高360像素: 1080 * 3 / 9, 在480P屏幕高160像素: 480 * 3 / 9
+    optional    int64           virtual_high    = 1 [default = 0];
+    optional    int64           virtual_weight  = 2 [default = 0];
+    repeated    Banner          group           = 3;
+}
+
+// 将 html 内容加载到一个 WebView 控件中
+message FormaxHtmlFrame {
+    optional    Jumper          jump            = 1;
+    optional    string          html            = 2; // 完整的页面源码
+    optional    string          url             = 3; // or 一个URL
+}
+
+// 资讯摘要
+message NewsBrief {
+    optional    Jumper          jump            = 1;
+    optional    Source          source          = 2; // 资讯源
+    optional    int64           unix_utc        = 3 [default = 0]; // 以格林威治时间为基准的 UNIX 时间戳
+    optional    string          title           = 4; // 资讯标题
+    optional    string          brief           = 5; // 资讯详情摘要
+    repeated    string          previews        = 6; // 预览图列表，目前0个或1个
+    repeated    Label           labels          = 7; // #LABEL# 列表，目前0个或1个
+    optional    CountGroup      counts          = 8; // 各种计数
+    repeated    Ticker          tickers         = 9; // 自选股列表数据
+    optional    string          article_from    = 10; // 资讯文章的来源
+    optional    bool            need_mark       = 11; // 置顶标志, 资讯显示角标
+}
+
+// 内容段
+message ContentSegment {
+    optional    Jumper          jump            = 1;
+    optional    string          text            = 2;
+}
+
+// 回复
+message Reply {
+    optional    Jumper          jump            = 1;
+    optional    Source          source          = 2; // 回复人
+    optional    int64           unix_utc        = 3 [default = 0]; // 以格林威治时间为基准的 UNIX 时间戳
+    optional    Source          recver          = 4; // 被回复人
+    repeated    ContentSegment  segments        = 5; // 回复段
+    optional    int64           reply_id        = 6; // 评论id
+}
+
+message Picture {
+    optional    Jumper          jump            = 1;
+    optional    string          thumb           = 2;
+    optional    string          source          = 3;
+    optional    string          height          = 4;  // 图片高度
+    optional    string          width           = 5;  // 图片宽度
+}
+
+// 牛人圈列表附加信息容器
+message ExtraData {
+    optional    string          class_type      = 1; // eg:NEWS, PICTURES, STOCK, FOREX, RED_PACKET/红包
+    optional    NewsBrief       news            = 2;
+    repeated    Picture         pictures        = 3;
+    optional    RedPacket       red_packet      = 4; // 红包样式
+}
+
+// 红包样式
+message RedPacket {
+  optional    Jumper           jump       = 1;     // 红包跳转
+  optional    string           img_url    = 2;     // 背景图片
+  optional    string           title      = 3;     // 标题
+  optional    string           brief      = 4;     // 简介
+}
+
+// 牛人圈摘要
+message MasterBrief {
+    optional    Jumper          jump            = 1;
+    optional    Source          source          = 2; // 发布牛人
+    optional    int64           unix_utc        = 3 [default = 0]; // 以格林威治时间为基准的 UNIX 时间戳
+    repeated    ContentSegment  segments        = 4; //发表内容
+    repeated    ExtraData       extra_data      = 5; //附加信息
+    repeated    Label           labels          = 6; // #LABEL# 列表，目前0个或1个
+    optional    CountGroup      counts          = 7; // 各种计数
+    repeated    Reply           replys          = 8; // 各种回复
+    optional    int64           topic_id        = 9; // 帖子id
+    optional    int64           reply_delay     = 10 [default = 50];
+    optional    string          visible_group   = 11; // 4.0.3 帖子可见者,  关注者/复制者
+                                                       // 只对发帖牛人本身标记显示, 没填时忽略
+    optional    bool            need_mark       = 12;  // 置顶标志， 对于帖子显示加精
+}
+
+message QuickNews {
+    optional    int64           unix_utc        = 1 [default = 0]; // 以格林威治时间为基准的 UNIX 时间戳
+    optional    string          text            = 2;
+}
+
+// 7*24摘要
+message QuickGroup {
+    optional    Jumper          jump            = 1;
+    optional    Source          source          = 2; // 资讯源
+    repeated    QuickNews       group           = 3;
+}
+
+// 折叠式频道/自选更新提醒帧
+message NewsGroup {
+    optional    Jumper          jump            = 1; // 跳转到某资讯列表
+    optional    Source          source          = 2; // 用以更新图标
+    optional    int64           unix_utc        = 3 [default = 0]; // 以格林威治时间为基准的 UNIX 时间戳
+    optional    int64           updates         = 4;
+    repeated    ContentSegment  segments        = 5;
+}
+
+message HotMasters {
+    repeated    Source          masters         = 1;
+}
+
+message PromoteFrame {
+    optional    Source          source          = 1; // 推广位内容
+    optional    int64           join_person     = 2; // 参与人数
+    optional    int64           posts           = 3; // 帖子数量
+    optional    string          promote_type    = 4; // COMMON 一般推广位,TOPIC/话题, TOPIC_LINK/话题多链接
+    repeated    Source          topic_slice     = 5; // 话题链接推广位
+}
+
+message ReplyFrame {
+    optional    Jumper          jump            = 1;
+    optional    Source          source          = 2; // 发回复的人
+    optional    int64           unix_utc        = 3 [default = 0]; // 以格林威治时间为基准的 UNIX 时间戳
+    optional    Source          recver          = 4; // 被回复人
+    optional    string          cnt_type        = 5; // 源内容类型, NEWS
+    optional    string          cnt_id          = 6; // 源内容ID, NewsID
+    optional    string          reply_token     = 7; // 被回复的回复, ReplyToken
+    repeated    ContentSegment  segments        = 8; // 回复内容
+    optional    CountGroup      counts          = 9; // 各种计数/点赞
+    repeated    ContentSegment  recv_segments   = 10; // 被回复的内容
+}
+
+// 抽象帧，每一个帧对应一个展示框
+message AbstructFrame {
+    optional    string          class_type      = 1; // eg: BANNER, WEB, NEWS, MASTER, AD, QUICK, NEWSGROUP,
+                                                     // HOTMASTER, PROMOTE 推广, RECOMAND 推荐牛人或栏目, TOPIC_LIST/话题, REPLY/评论
+                                                     // VOTE/投票
+    optional    string          fid             = 2; // frame id , eg: BANNER_1, UGC_123, NEWS_123
+    optional    BannerGroup     banner          = 3;
+    optional    FormaxHtmlFrame webf            = 4;
+    optional    NewsBrief       news            = 5;
+    optional    MasterBrief     master          = 6;
+    optional    QuickGroup      quick           = 7;
+    optional    NewsGroup       news_group      = 8;
+    optional    HotMasters      hot_masters     = 9;  // Hotmasters 封装一个source列表， 列表信息为牛人或者栏目
+    optional    PromoteFrame    promote         = 10; // 推广位
+    optional    TopicHead       topics          = 11; // 精彩话题列表
+    optional    ReplyFrame      reply           = 12; // 回复帖
+    optional    VoteFrame       vote            = 13; // 投票帧
+}
+
+// 附加信息
+message AssistInfo {
+    repeated    string          tickers         = 1; // 自选列表
+}
+
+// 获取页面帧列表(使用 lastframe)
+// 更新某些帧列表(使用 updateframes)
+// 若 updateframes & lastframe 同时被填充，仅使用 updateframes
+message ContentListRequest {
+    optional    TerminalInfo    terminal_info   = 1; // 终端信息, 该结构的定义在cell_proxy_common.proto中
+    optional    LoginSession    login_session   = 2; // 登录态的信息， 该结构的定义在cell_proxy_common.proto中
+    optional    AssistInfo      assist          = 3; // 附加信息
+    optional    string          navigation      = 4; // eg: REMEN,YAOWEN,ZIXUAN,NIUREN,TOUZI, NIUREN_WO_DE 我发布的, GUANZHU-400 关注4.0版本,
+                                                     // GUANZHU-401 关注4.0.1版本, CHANNEL 栏目, SUBSCRIPTIONS 4.0.2消息中增加我关注的
+                                                     // STOCK_NIUREN/股票牛人， FOREX_NIUREN/外汇牛人
+                                                     // PT_REDIAN/首页热门推荐， PT_HANGQING/首页行情资讯
+    optional    string          last_frame      = 5; // eg: NEWS_123, BANNER_TOP, BANNER_AD_1
+    repeated    string          update_frames   = 6; // eg: NEWS_123, BANNER_TOP, BANNER_AD_1
+    optional    int64           uid             = 7; // 获取牛人主页时需要传该牛人的uid
+}
+
+// 话题主页头信息
+message TopicHead {
+    optional    int64           topic_id                  = 1;    // 话题id
+    optional    string          topic_title               = 2;    // 话题名
+    optional    string          topic_banner_url          = 3;    // 话题背景图
+    optional    int32           join_person               = 4;    // 参与人数
+    optional    int32           posting_number            = 5;    // 帖子数量
+    optional    int64           uid                       = 6;    // 发表此话题的话题君的id
+    optional    string          nick_name                 = 7;    // 发表此内容的用户名称
+    optional    string          portrait_url              = 8;    // 发表此内容的用户头像链接
+    optional    int64           publish_time              = 9;    // 发表时间
+    optional    string          topic_describe            = 10;   // 话题导语
+    optional    ShareInfo       shareinfo                 = 11;   // 分享的内容
+    optional    Jumper          jump                      = 12;   // 发表此话题的话题君的schema
+}
+
+// 返回页面帧列表
+message ContentListResponse {
+    optional    StatusInfo      status_info     = 1; // 请求返回的状态信息， 该结构定义在cell_proxy_common.proto中
+    repeated    AbstructFrame   frames          = 2; // 请求返回的内容帧
+}
+
+// 订阅源阅读或操作
+message SourceRequest {
+    optional    TerminalInfo    terminal_info   = 1; // 终端信息, 该结构的定义在cell_proxy_common.proto中
+    optional    LoginSession    login_session   = 2; // 登录态的信息， 该结构的定义在cell_proxy_common.proto中
+    optional    AssistInfo      assist          = 3; // 附加信息
+    // 以下信息，从 Source 结构获取
+    optional    string          source_type     = 4; // MASTER/牛人, CHANNEL/栏目， TICKER/股票, TOPIC/话题, TOPIC_LIST/话题列表
+                                                     // LASTTOPIC/最新话题, SPEAK_ENTRANCE/小白发言入口中间页
+                                                     // TOPIC_FROM_PT/平台拉话题请求, FILTER_BY_NAME/外汇端按作者名拉取资讯
+                                                     // MARKET_UGC/个股详情新帖
+    optional    int64           source_id       = 5 [default = 0];
+    optional    string          source_name     = 6; // 订阅号名字，个股代码
+    // 若订阅源页面翻页，填充lastframe
+    optional    string          last_frame      = 7;
+}
+
+message SourceResponse {
+    optional    StatusInfo      status_info     = 1; // 请求返回的状态信息， 该结构定义在cell_proxy_common.proto中
+                                                     // 返回话题主页时如果话题被删除，则返回101
+    optional    Source          source          = 2; // 资讯源信息，仅第一页保证有效，翻页时可有可无
+    repeated    AbstructFrame   frames          = 3; // 请求返回的内容帧
+    optional    TopicHead       topic_head      = 4; // 话题主页的头信息 4.0.4增加
+    optional    ShareInfo       shareinfo       = 5; // 分享的内容
+}
+
+// 订阅源 订阅/取消订阅/屏蔽 操作
+message SubcribeSourceRequest {
+    optional    TerminalInfo    terminal_info   = 1; // 终端信息, 该结构的定义在cell_proxy_common.proto中
+    optional    LoginSession    login_session   = 2; // 登录态的信息， 该结构的定义在cell_proxy_common.proto中
+    // 以下信息，从 Source 结构获取
+    optional    string          source_type     = 3;
+    optional    int64           source_id       = 4 [default = 0];
+    optional    string          source_name     = 5; // 订阅号名字
+    // 订阅源操作填充 operator
+    // eg: 订阅/取消订阅/屏蔽："SUBCRIBE", "CANCEL", "BLOCK"
+    // eg: 订阅Push/取消Push："SUB_PUSH", "CANCEL_PUSH"
+    optional    string          operator        = 6;
+}
+
+message SubcribeResponse {
+    optional    StatusInfo      status_info     = 1; // 请求返回的状态信息， 该结构定义在cell_proxy_common.proto中
+}
+
+// 搜索请求
+message SearchRequest {
+    optional    TerminalInfo    terminal_info   = 1; // 终端信息, 该结构的定义在cell_proxy_common.proto中
+    optional    LoginSession    login_session   = 2; // 登录态的信息， 该结构的定义在cell_proxy_common.proto中
+    optional    string          search_type     = 3; // 请求的数据类型。MIX:服务器定义结果，TICKER:股票, MASTER:牛人, NEWS:资讯，UGC:牛人帖子
+    optional    string          search_input    = 4; // 输入查询的内容
+    optional    string          last_frame      = 5; // 下一帧请求
+}
+
+// 搜索返回结果
+message SearchResponse {
+    optional    StatusInfo      status_info     = 1; // 请求返回的状态信息， 该结构定义在cell_proxy_common.proto中
+    repeated    Ticker          tickers         = 2; // 标的，股票和外汇
+    repeated    Source          masters         = 3; // 牛人，各种身份
+    repeated    AbstructFrame   ugcs            = 4; // 帖子，各种吹牛B
+    repeated    AbstructFrame   news            = 5; // 资讯，各种口水
+}
+
+// 获取内容的回复，须指明内容类型和内容ID，翻页时添最后一帧的帧ID
+message ContentReplyListRequest {
+    optional    TerminalInfo    terminal_info   = 1; // 终端信息, 该结构的定义在cell_proxy_common.proto中
+    optional    LoginSession    login_session   = 2; // 登录态的信息， 该结构的定义在cell_proxy_common.proto中
+    optional    string          cnt_type        = 3; // 源内容类型。NEWS:资讯，UGC:牛人帖子
+    optional    string          cnt_id          = 4; // 源内容ID
+    optional    string          last_frame      = 5; // 下一帧请求
+}
+
+// 回复列表仍然以帧的形式提供，同时自带一个 TOKEN 字段，当发送回复的时候将该 TOKEN 给服务器验证
+message ContentReplyListResponse {
+    optional    StatusInfo      status_info     = 1; // 请求返回的状态信息， 该结构定义在cell_proxy_common.proto中
+    repeated    AbstructFrame   frames          = 2; // 请求返回的内容帧
+    optional    string          post_token      = 3; // 发送回复的 TOKEN
+    optional    bool            has_more        = 4; 
+    optional    int64           nr_total        = 5 [default = 0];
+}
+
+message PostContentReplyRequest {
+    optional    TerminalInfo    terminal_info   = 1; // 终端信息, 该结构的定义在cell_proxy_common.proto中
+    optional    LoginSession    login_session   = 2; // 登录态的信息， 该结构的定义在cell_proxy_common.proto中
+    optional    ReplyFrame      reply           = 3; // 回复内容
+    optional    string          token           = 4; // 从 ContentReplyListResponse.post_token 或 PostContentReplyResponse.new_token 拿到的 TOKEN
+    optional    bool            copy_to_ugc     = 5 [default = false]; // 转发
+}
+
+message PostContentReplyResponse {
+    optional    StatusInfo      status_info     = 1; // 请求返回的状态信息， 该结构定义在cell_proxy_common.proto中
+    optional    string          new_token       = 2; // 发送回复的 TOKEN
+}
+
+message DeleteContentReplyRequest {
+    optional    TerminalInfo    terminal_info   = 1; // 终端信息, 该结构的定义在cell_proxy_common.proto中
+    optional    LoginSession    login_session   = 2; // 登录态的信息， 该结构的定义在cell_proxy_common.proto中
+    repeated    string          tokens          = 3; // 要删除的回复的 TOKEN
+}
+
+message DeleteContentReplyResponse {
+    optional    StatusInfo      status_info     = 1; // 请求返回的状态信息， 该结构定义在cell_proxy_common.proto中
+    optional    string          new_token       = 2; // 发送回复的 TOKEN
+}
+
+message FreshmanPageRequest {                        // 小白用户主页
+    optional    TerminalInfo    terminal_info   = 1; // 终端信息, 该结构的定义在cell_proxy_common.proto中
+    optional    LoginSession    login_session   = 2; // 登录态的信息， 该结构的定义在cell_proxy_common.proto中
+    optional    int64           uid             = 3; // 请求的用户主页的uid
+    optional    string          cnt_type        = 4; // 请求源类型， ALL/全部， UGC/帖子， REPLY/评论
+    optional    string          last_frame      = 5; // 下一帧请求
+}
+
+message FreshmanSource {
+  optional     string           head_url        = 1; // 头像地址
+  optional     string           nick_name       = 2; // 昵称
+  optional     string           brief           = 3; // 简介
+  optional     int32            follows         = 4; // 关注的人数
+  optional     int32            fans            = 5; // 粉丝
+  optional     int32            cnt_count       = 6; // 发表的内容数量
+  optional     bool             has_follow      = 7 [default = false]; // 是否关注， 此值在其他用户访问时有效
+  optional     int64            source_id       = 8; // 主页用户的id
+}
+
+message FreshmanPageResponse {
+    optional    StatusInfo      status_info     = 1; // 请求返回的状态信息， 该结构定义在cell_proxy_common.proto中
+    optional    FreshmanSource  head            = 2; // 此内容在请求的第一帧有效
+    repeated    AbstructFrame   frames          = 3; // 请求返回的内容帧, 包含有帖子和评论的内容
+    optional    int64           local_time      = 4 [default = 0]; // 服务器本地时间, 以格林威治时间为基准的 UNIX 时间戳
+}
+
+// 投票选项
+message VoteOption {
+  optional      string          mark_key        = 1; // 投票选项标识， 投票时用这个值请求
+  optional      string          name            = 2; // 投票选项的名字
+  optional      int32           count           = 3; // 投票人数
+  optional      bool            has_voted       = 4; // 是否已投此项
+}
+
+// 投票帧
+message VoteFrame {
+  optional      string          title           = 1; // 投票标题/文案
+  optional      int32           join_num        = 2; // 参与人数
+  repeated      VoteOption      vote_option     = 3; // 投票选项
+  optional      bool            has_voted       = 4; // 是否已投票
+  optional      int64           vote_id         = 5; // 投票ID
+}
+
+message VoteRequest {
+    optional    TerminalInfo    terminal_info   = 1; // 终端信息, 该结构的定义在cell_proxy_common.proto中
+    optional    LoginSession    login_session   = 2; // 登录态的信息， 该结构的定义在cell_proxy_common.proto中
+    repeated    string          mark_key        = 3; // 投票选项的标识, 支持单选/多选
+    optional    int64           topic_id        = 4; // 投票绑定的话题id
+}
+
+message VoteResponse {
+    optional    StatusInfo      status_info     = 1; // 请求返回的状态信息， 该结构定义在cell_proxy_common.proto中
+    optional    AbstructFrame   frames          = 2; // 返回投票数据
+}
+
+// 接口
+service ContentService {
+    rpc GetContentList(ContentListRequest) returns(ContentListResponse);
+    rpc GetContentSource(SourceRequest) returns(SourceResponse);
+    rpc SubcribeSource(SubcribeSourceRequest) returns (SubcribeResponse);
+    rpc Search(SearchRequest) returns (SearchResponse);   // 提供搜索服务
+    rpc GetContentReplyList(ContentReplyListRequest) returns(ContentReplyListResponse);
+    rpc PostContentReply(PostContentReplyRequest) returns(PostContentReplyResponse);
+    rpc DeleteContentReply(DeleteContentReplyRequest) returns(DeleteContentReplyResponse);
+    rpc GetHomePage(FreshmanPageRequest) returns(FreshmanPageResponse);    // 普通用户主页请求
+    rpc CastAVote(VoteRequest) returns(VoteResponse);                      // 投票
+}
