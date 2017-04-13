@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset='utf-8'>
+	<link rel="stylesheet" type="text/css" href="../stylesheets/stylesheet.css" media="screen">
+	<link rel="stylesheet" type="text/css" href="../stylesheets/github-dark.css" media="screen">
+	<link rel="icon" type="image/jpeg" href="../images/favicon.jpeg">
+	<title>应用面向对象原则进行 protobuf 协议设计</title>
+</head>
+
+<body>
+	<header>
+		<div class="container">
+			<a href="../index.html">
+				<h1>代码与代码之外</h1>
+				<h2>Code and Beyond</h2>
+			</a>
+			<section id="titles">
+				<h3>应用面向对象原则进行 protobuf 协议设计</h3>
+			</section>
+		</div>
+	</header>
+
+	<div class="container">
+		<section id="main_content">
+			<p>在最近的一个公司项目中，我们实现了一个以面向对象原则为指导的 protobuf 协议(<a target="_blank" href="https://github.com/6xiao/6xiao.github.io/blob/master/2017/content.proto">可在线浏览</a>)。目前看来效果不错，已经推广到项目之外，在一定程度上也优化了产品设计。</p>
+			<p>最开始的需求是实现一个混排的资讯和用户短图文系统，可以不断下拉刷新。开发（我本人）在协议设计时考虑到以后可能会集成更多的可展示对象，设计了一个“抽象帧容器列表”协议。该协议在一年多的产品演进中保持了极好的扩展性，目前除资讯和用户短图文外，还支持推广、话题、Banner、H5、快讯、投票等展示对象。在演进过程中保持了和设计之初一致的概念和约定，并复用了大量协议中的跳转、按钮、内容段等对象。</p>
+			<p>由于 protobuf 是一个只有结构概念的 IDL，所以这里面使用了少量显式的对象化技巧，类似于在 C 语言中模拟面向对象技术，这方面的案例非常容易获取。</p>
+			<p>这个协议里几个重要的概念和特点如下：</p>
+			<ul>
+				<li>App 可以段落性访问一个内容列表，列表的每一个元素是一个“抽象帧”，抽象帧是一个容器，装载着真正要支持显示的对象。这一点为了保证协议的扩展性。</li>
+				<li>App 只显示它认识的帧或帧中的部分属性，低版本 App 访问最新服务器会发现无法识别的帧，可以扔掉。这一点保证版本兼容性和继承能力，App 和后台均无需面面俱到的特别处理。</li>
+				<li>跳转、标签、计数、内容段等可操作对象组合到资讯详情、牛人帖、话题等数据展示对象中，保证复用性。在以后的设计中，秉承了这种组合优先的思想。</li>
+				<li>使用 optional / repeated 定义，严禁使用 required。严禁 enum 和用 int 模拟枚举, 优选 string，数值等少量类型可使用 int 定义。这一点是工程需求，可读性优于那一丁点性能。</li>
+				<li>协议文本必须优雅清晰，尽量自注释，若无则必须有明确的注释，即使跨结构也不允许出现同名不同义现象。</li>
+			</ul>
+			<p>举例，如下接口：</p>
+			<p><code>
+				<pre>rpc GetContentList(ContentListRequest) returns(ContentListResponse);</pre>
+			</code></p>
+			<p>用户需要在 ContentListRequest 填写终端信息、登录信息、附加信息、（区分访问类型的）导航信息、（用以翻页的）最后一帧等。</p>
+			<p>当 App 或其它服务发起列表请求时，会使用该接口将 ContentListRequest 结构发给服务并获取 ContentListResponse 结构。</p>
+			<p><code>
+				<pre>message ContentListResponse { 
+				<br> optional StatusInfo     status_info = 1; // 请求返回的状态信息， 该结构定义在cell_proxy_common.proto中
+				<br> repeated AbstructFrame  frames = 2; // 请求返回的内容帧 <br>}</pre>
+			</code></p>
+			<p>服务器将多个可展示数据填加到一个 ContentListResponse 结构的 AbstructFrame 列表。扩展性的关键是这个 AbstructFrame 抽象帧共用体，将其组装成列表的作用是实现混排。</p>
+			<p><code>
+				<pre>// 抽象帧，每一个帧对应一个展示框
+				<br>message AbstructFrame {
+				<br> optional string        class_type = 1; // eg: BANNER, WEB, NEWS, MASTER, AD, QUICK, NEWSGROUP,// HOTMASTER, PROMOTE 推广, RECOMAND 推荐牛人或栏目, TOPIC_LIST/话题, REPLY/评论 // VOTE/投票
+				<br> optional string        fid = 2; // frame id , eg:BANNER_1, UGC_123, NEWS_123
+				<br> optional BannerGroup   banner = 3;
+				<br> optional HtmlFrame     webf = 4;
+				<br> optional NewsBrief     news = 5;
+				<br> optional MasterBrief   master = 6;
+				<br> optional QuickGroup    quick = 7;
+				<br> optional NewsGroup     news_group = 8;
+				<br> optional HotMasters    hot_masters = 9; // Hotmasters 封装一个source列表， 列表信息为牛人或者栏目
+				<br> optional PromoteFrame  promote = 10; // 推广位
+				<br> optional TopicHead     topics = 11; //精彩话题列表 
+				<br> optional ReplyFrame    reply = 12; // 回复帖 
+				<br> optional VoteFrame     vote = 13; // 投票帧 <br>}</pre>
+			</code></p>
+			<p>App 通过解析 AbstructFrame 并判断是否支持该类型 class_type，若支持则取出对应结构而显示。</p>
+			<p>如一个 AbstructFrame 列表可能顺序装箱了 PromoteFrame、MasterBrief、NewsBrief、MasterBrief 等，App 将它开箱并顺序展示。低版本的 App 可能会丢掉它不认识的 PromoteFrame，只展示后三帧。</p>
+			<p>阅读这几个结构的定义会发现它们都组合了 Jumper、Source 等结构，这些结构在不同帧中的意义是相同的。</p>
+			<p>Talk is cheap！<a target="_blank" href="https://github.com/6xiao/6xiao.github.io/blob/master/2017/content.proto">阅读协议</a></p>
+			<hr>
+			<p>2017-04-15 深圳</p>
+			<p>设计要面向现代化，面向世界，面向未来！</p>
+		</section>
+	</div>
+</body>
+
+</html>
