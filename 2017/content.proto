@@ -1,17 +1,15 @@
-import "formax_social/cell_proxy/proto/cell_proxy_common.proto";
-
-package cell_proxy.protocols;
-option java_package = "formax.net";
-option java_outer_classname = "ContentServiceProtocol";
+import ...
+...
+...
 
 // 跳转处理
 message Jumper {
-    optional    string          scheme          = 1; // eg: formax://***
+    optional    string          scheme          = 1; // eg: inner://***
 }
 
 // 订阅源的分类签或内容的分类签
 message Label {
-    optional    Jumper          jump            = 1; // eg: formax://stockDetail
+    optional    Jumper          jump            = 1; // eg: inner://stockDetail
     optional    string          class_type      = 2; // eg: TEXT, TICKER, ICON
     optional    string          text            = 3; // eg: #财经#, 00700, V官方
     optional    string          color           = 4;
@@ -70,7 +68,7 @@ message BannerGroup {
 }
 
 // 将 html 内容加载到一个 WebView 控件中
-message FormaxHtmlFrame {
+message HtmlFrame {
     optional    Jumper          jump            = 1;
     optional    string          html            = 2; // 完整的页面源码
     optional    string          url             = 3; // or 一个URL
@@ -201,7 +199,7 @@ message AbstructFrame {
                                                      // VOTE/投票
     optional    string          fid             = 2; // frame id , eg: BANNER_1, UGC_123, NEWS_123
     optional    BannerGroup     banner          = 3;
-    optional    FormaxHtmlFrame webf            = 4;
+    optional    HtmlFrame       webf            = 4;
     optional    NewsBrief       news            = 5;
     optional    MasterBrief     master          = 6;
     optional    QuickGroup      quick           = 7;
