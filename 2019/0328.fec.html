@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset='utf-8'>
+	<link rel="stylesheet" type="text/css" href="../stylesheets/stylesheet.css" media="screen">
+	<link rel="stylesheet" type="text/css" href="../stylesheets/github-dark.css" media="screen">
+	<link rel="icon" type="image/jpeg" href="../images/favicon.jpeg">
+	<title>简明前向纠错码(FEC)</title>
+</head>
+
+<body>
+	<header>
+		<div class="container">
+			<a href="../index.html">
+				<h1>代码与代码之外</h1>
+				<h2>Code and Beyond</h2>
+			</a>
+			<section id="titles">
+				<h3>简明前向纠错码(FEC)</h3>
+			</section>
+		</div>
+	</header>
+
+	<div class="container">
+		<section id="main_content">
+			<p>前向纠错能力在很多产品 PPT 里捧的很高，但其实是一个炒冷饭的技术。类似海明码和硬盘 RAID 阵列都有类似的功能和概念。</p>
+			<p>最简单的前向纠错实现是 QUIC 用的异或(RAID也是用异或)，N 个数据块异或出一个校验块，然后即可以容忍 1/(N+1) 的丢包率。</p>
+			<p>异或的计算原理在逻辑代数里，虽然非常简单，但那也是大学才学的玩意，本文不详述。</p>
+			<p>下面我们用中学数学解释一下能容忍任意 M/N 丢包率的算法，大约是初中生基本都能懂的程度。</p>
+			<p>先假设一对网络通讯的发送方和接收方约定如下二元一次方程组：</p>
+			<p><code><pre>
+				<br>x + y = a
+				<br>x + 2y = b
+			</pre></code></p>
+			<p>接收方收到：{a=3,b=4} 这组数据的时候，发送方想让他知道啥呢？</p>
+			<p>接收方解方程得到结果：{x=2, y=1}，这才是发送方的原始数据。</p>
+			<p>这么折腾一圈似乎没啥意义啊，就浪费了一点 CPU 时间而已……</p>
+			<p>如果我们继续折腾，扩展一下这个方程组：</p>
+			<p><code><pre>
+				<br>x + y = a
+				<br>x + 2y = b
+				<br>2x + y = c
+			</pre></code></p>
+			<p>接收方收到：{a=4,c=7} 时，它能解出：{x=3,y=1}。</p>
+			<p>接收方收到：{b=5,c=4} 时，它能解出：{x=1,y=2}。</p>
+			<p>接收方收到：{a=5,b=8} 时，它能解出：{x=2,y=3}。</p>
+			<p>我们看到：扩展方程组后，接收方只要收到 2/3 的数据，即能解出所有的原始数据。</p>
+			<p>调整方程组，就可以设计任意容忍 M/N 丢包率的算法了。</p>
+			<p>至于如何用代码设计和实现这个算法，因为涉及线性代数，本文不讲。</p>
+			<hr>
+			<p>2019-03-28 深圳</p>
+			<p>技术很多都是新瓶装旧酒，关键在变通！</p>
+		</section>
+	</div>
+</body>
+
+</html>
